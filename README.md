@@ -98,7 +98,7 @@ for(x in 1:length(sppx)){
 
 <img src="README_files/figure-markdown_github/unnamed-chunk-4-1.png" width="576" />
 
-**Bayesian MCMC hierarchical mixing model to estimate proportion of prey contributing to diet at expected trophic position **
+__Bayesian MCMC hierarchical mixing model to estimate proportion of prey contributing to diet at expected trophic position__
 
 ``` r
 sppx <- c("SOTE", "WTSH", "BRBO", "BRNO", "LAAL", "BUPE", "WTTR", "WHTE")
