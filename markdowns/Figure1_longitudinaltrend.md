@@ -83,4 +83,4 @@ for(x in 1:length(sppx)){
 }  
 ```
 
-![](Figure1_longitudinaltrend_files/figure-markdown_github/unnamed-chunk-4-1.png)
+<img src="Figure1_longitudinaltrend_files/figure-markdown_github/unnamed-chunk-4-1.png" width="576" />

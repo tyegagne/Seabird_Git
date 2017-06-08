@@ -65,7 +65,7 @@ data<-subset(data, value == "ave")
 total<-merge(data,TPforID_all, by="uc_id")
 ```
 
-```{r,fig.width=4, fig.height=10}
+```{r,fig.width=6, fig.height=13,fig.retina=2}
 sppx<-c("LAAL","BUPE","WTSH","WTTR","BRBO","BRNO","WHTE","SOTE","TP")         # adjust order taxonomically 
 
 S <- 1000

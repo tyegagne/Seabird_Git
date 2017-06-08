@@ -5,7 +5,7 @@ Tyler Gagne
 
 *Set working directory and read in dataset*
 
-read in new SAU data
+Read in reconstuctured Sea Around Us project data
 
 ``` r
 famandspp<-read.csv("SAULandings_familyandspp.csv", header = T)
@@ -19,7 +19,9 @@ a<-ggplot(famandspp,aes(x=year,y=sqrt(sumcatch)))+
 a
 ```
 
-![](Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-3-1.png) recast and from in to df with columns for catch taxa
+<img src="Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-3-1.png" width="672" />
+
+recast and from in to df with columns for catch taxa
 
 ``` r
 df <- data.frame(cast(famandspp, year ~ Taxon.Name ))
@@ -156,7 +158,9 @@ ggplot(plot,aes(x=year,y=tp))+
   stat_summary(fun.y=mean, geom="line", aes(group = 1)) 
 ```
 
-![](Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-7-1.png)
+<img src="Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-7-1.png" width="672" />
+
+This the syntax input of the randomForest model input. ntree is the number of trees used to build the model. A data partition to speed up/create a testset. Then a formula expression of the model to be built
 
 ``` r
 #################################
@@ -188,17 +192,17 @@ Seabird_Random_Forest <- randomForest(tp ~ #current climate
 
 **Variable importance and OOB error improvement** We utilized a variable importance metric that measures reduction of mean squared error of a model when a predictor is randomly permuted (i.e. ‘noised up’), which allows for a rank order of variable influence on the model.
 
-![](Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-9-1.png)
+<img src="Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-9-1.png" width="960" />
 
 **Partial dependence plots** Partial dependence plots visualize the average partial relationship between the predicted response and a predictor conditioned on all other predictors.
 
-![](Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-10-1.png)
+<img src="Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-10-1.png" width="960" />
 
 **Partial dependence surface plots**
 
 Selection of interactions between predictors and trophic position response. Yellow cells indicate relatively higher trophic position, relatively lower is blue. Polygons indicate the convex hull of the training values.
 
-![](Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-11-1.png)
+<img src="Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-11-1.png" width="960" />
 
 **Individual conditional expectation (ICE) plots**
 
@@ -231,4 +235,4 @@ impvar<- rownames(sonarimp)[order(sonarimp[,1],decreasing = TRUE)]
 impvar <- impvar[2:16]
 ```
 
-![](Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-13-1.png)
+<img src="Fig5_randomforest_files/figure-markdown_github/unnamed-chunk-13-1.png" width="960" />
