@@ -20,7 +20,7 @@ library(ggplot2)
 library(data.table)
 library(mgcv)
 library(gridExtra)
-setwd("/Users/tgagne/Seabird_Git/data/csv")
+#setwd("/Users/tgagne/Seabird_Git/data/csv")
 set.seed(4567)
 #raw AA-isotope data
 data<-read.csv('seabird_CSSIA_NPacific_1890_2016_rawdata.csv', header = T)
