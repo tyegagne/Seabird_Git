@@ -2,7 +2,7 @@
 title: "Seabird Random Forest Model - June 2017"
 author: "Tyler Gagne"
 date: "6/1/2017"
-output: md_document
+output: github_document
 ---
 
 ```{r "setup", include=FALSE}
@@ -32,6 +32,7 @@ a plot to take a look at it
 ```{r}
 a<-ggplot(famandspp,aes(x=year,y=sqrt(sumcatch)))+
   geom_line(aes(color=Taxon.Name))+theme_bw()
+a
 ```
 recast and from in to df with columns for catch taxa
 ```{r}
@@ -67,7 +68,7 @@ set.seed(123)
 ```{r}
 plot <- bigger_data
 plot$spp <- factor(plot$spp, levels=c("LAAL", "BUPE", "WTSH", "WTTR", "BRBO","BRNO","WHTE","SOTE","TP"))
-ggplot(plot)+
+ggplot(plot,aes(x=year,y=tp))+
   geom_boxplot(aes(x=year,y=tp,group=as.factor(year)),outlier.shape = NA)+
   facet_wrap(~spp,ncol = 4)+
   geom_vline(xintercept=1951,linetype="dotted",color = "red")+
@@ -79,7 +80,7 @@ ggplot(plot)+
                        legend.key.size = unit(.75, "cm"),
                        legend.title=element_blank(),
                        strip.text=element_text(hjust=0))+ylab("trophic position")+
-  stat_summary(fun.y=mean, geom="line", aes(group=1)) 
+  stat_summary(fun.y=mean, geom="line", aes(group = 1)) 
 ```
 
 ```{r}
@@ -87,6 +88,8 @@ ggplot(plot)+
 #################################
 #####Full model Development######
 #################################
+
+ntree = 100
 #create data partition for training set 
 InTrain<-createDataPartition(full_data$spp,p=0.8,list=FALSE)
 #partion out training set
@@ -105,7 +108,7 @@ Seabird_Random_Forest <- randomForest(tp ~ #current climate
                             year,
                           data=training1,
                           importance = TRUE,
-                          ntree = 2000)
+                          ntree = ntree)
 
 ```
 
@@ -178,7 +181,7 @@ Z <- subset(training1, select = c("tp", "MEIave_by_year","PDOave_by_year","NPGOy
                                   "Carangidae" ,"Exocoetidae" ,"Mullidae" ,"Ommastrephidae" ,
                                   "forage_dist" , "wing_load" , "spp" , 
                                   "year"))
-final_fit <- randomForest(Z[,2:17],Z[,1],ntree = 2000, importance = TRUE)
+final_fit <- randomForest(Z[,2:17],Z[,1],ntree = ntree, importance = TRUE)
 sonarimp <- importance(final_fit)
 impvar<- rownames(sonarimp)[order(sonarimp[,1],decreasing = TRUE)]
 impvar <- impvar[2:16]
