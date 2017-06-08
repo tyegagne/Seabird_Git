@@ -22,34 +22,39 @@ library(mgcv)
 library(gridExtra)
 setwd("/Users/tgagne/Seabird_Git/data/csv")
 set.seed(4567)
-
 #raw AA-isotope data
 data<-read.csv('seabird_CSSIA_NPacific_1890_2016_rawdata.csv', header = T)
 #Prey data for overlay
 preyMTL_data<-read.csv('NEWpreyMTL_apr19.csv', header = T)
 data <- droplevels( data[-which(data$spp == "RFBO"), ] )
-
 #split speciment records up in to list by specimen id
 dataList = split(data, data$uc_id)
-
 ```
 
 
-```{r,fig.width=10, fig.height=5,echo=FALSE}
-#build function to draw random AA samples from analytic's distribution
+
+
+Build function to draw random AA samples from analytic's distribution
+```{r}
+
+N <- 1000
+
 GetTP <- function(anID){
   b = 2.4167
   TEF = 5.6333
-  ala.est<- rnorm(1000, mean = as.numeric(subset(anID, value == "ave", select = "ala")) , sd = as.numeric(subset(anID, value == "sd", select = "ala")))
-  glu.est<- rnorm(1000, mean = as.numeric(subset(anID, value == "ave", select = "glue")) , sd = as.numeric(subset(anID, value == "sd", select = "glue")))
-  ile.est<- rnorm(1000, mean = as.numeric(subset(anID, value == "ave", select = "ile")) , sd = as.numeric(subset(anID, value == "sd", select = "ile")))
-  leu.est<- rnorm(1000, mean = as.numeric(subset(anID, value == "ave", select = "leu")) , sd = as.numeric(subset(anID, value == "sd", select = "leu")))
-  pro.est<- rnorm(1000, mean = as.numeric(subset(anID, value == "ave", select = "pro")) , sd = as.numeric(subset(anID, value == "sd", select = "pro")))
-  val.est<- rnorm(1000, mean = as.numeric(subset(anID, value == "ave", select = "val")) , sd = as.numeric(subset(anID, value == "sd", select = "val")))
-  phe.est<- rnorm(1000, mean = as.numeric(subset(anID, value == "ave", select = "phe")) , sd = as.numeric(subset(anID, value == "sd", select = "phe")))
+  ala.est<- rnorm(N, mean = as.numeric(subset(anID, value == "ave", select = "ala")) , sd = as.numeric(subset(anID, value == "sd", select = "ala")))
+  glu.est<- rnorm(N, mean = as.numeric(subset(anID, value == "ave", select = "glue")) , sd = as.numeric(subset(anID, value == "sd", select = "glue")))
+  ile.est<- rnorm(N, mean = as.numeric(subset(anID, value == "ave", select = "ile")) , sd = as.numeric(subset(anID, value == "sd", select = "ile")))
+  leu.est<- rnorm(N, mean = as.numeric(subset(anID, value == "ave", select = "leu")) , sd = as.numeric(subset(anID, value == "sd", select = "leu")))
+  pro.est<- rnorm(N, mean = as.numeric(subset(anID, value == "ave", select = "pro")) , sd = as.numeric(subset(anID, value == "sd", select = "pro")))
+  val.est<- rnorm(N, mean = as.numeric(subset(anID, value == "ave", select = "val")) , sd = as.numeric(subset(anID, value == "sd", select = "val")))
+  phe.est<- rnorm(N, mean = as.numeric(subset(anID, value == "ave", select = "phe")) , sd = as.numeric(subset(anID, value == "sd", select = "phe")))
   TPforID <- (((((ala.est + glu.est + ile.est + leu.est + pro.est + val.est)/6)) - phe.est - b)/TEF ) + 1 
   return(TPforID)}
+```
+Apply function to list
 
+```{r, echo=FALSE,include=FALSE}
 TPforID_all = lapply(dataList, GetTP )                                  # apply function to list
 TPforID_all = melt(TPforID_all)                                         # melt dataframe
 TPforID_all$L1 <- as.factor(TPforID_all$L1)
@@ -58,8 +63,12 @@ setnames(TPforID_all, old=c("L1","value"), new=c("uc_id", "tp"))        # rename
 #Remerge with orginal
 data<-subset(data, value == "ave")
 total<-merge(data,TPforID_all, by="uc_id")
+```
 
+```{r,fig.width=4, fig.height=10}
 sppx<-c("LAAL","BUPE","WTSH","WTTR","BRBO","BRNO","WHTE","SOTE","TP")         # adjust order taxonomically 
+
+S <- 1000
 
 par(mfrow=c(5,2), mai = c(.4, 0.4, 0.4, 0.4))                                 # build plot frame
 for(x in 1:length(sppx)){
@@ -70,7 +79,7 @@ for(x in 1:length(sppx)){
   }
    tp_predict = as.data.frame(matrix(ncol=1000,nrow=126))
   
-  for (i in 1:1000){
+  for (i in 1:S){
     new_df <- ddply(species_data,.(year),function(x) x[sample(nrow(x),1),])   # sample value from each available year
     tp_est <- loess(tp ~ year, new_df,span = 1)                               # fit loess model through the series
     tp_predict[i] <- as.data.frame(predict(tp_est,data.frame(year = seq(1890, 2015,1)))) # predict for all years
