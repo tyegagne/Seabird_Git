@@ -5,26 +5,31 @@ date: "6/8/2017"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = "/Users/tgagne/Seabird_Git/data/csv")
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r, echo=FALSE,include=FALSE}
+#Load libraries, datasets, working directories
+library(dplyr)
+library(plyr)
+library(reshape)
+library(grid)
+library(ggplot2)
+library(data.table)
+library(mgcv)
+library(gridExtra)
+setwd("/Users/tgagne/Seabird_Git/data/csv")
+set.seed(4567)
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+#raw AA-isotope data
+data<-read.csv('seabird_CSSIA_NPacific_1890_2016_rawdata.csv', header = T)
+#Prey data for overlay
+preyMTL_data<-read.csv('NEWpreyMTL_apr19.csv', header = T)
+data <- droplevels( data[-which(data$spp == "RFBO"), ] )
 
-```{r cars}
-summary(cars)
+#split speciment records up in to list by specimen id
+dataList = split(data, data$uc_id)
+
 ```
-
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
-```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
