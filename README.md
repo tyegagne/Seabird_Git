@@ -5,9 +5,9 @@ In this repository you will find script and markdown examples of analysis used t
 
 The file structure is as follows:
 
-data <- contains CSV and .rData files used in construction of markdowns
+__data__ <- contains CSV and .rData files used in construction of markdowns
 
-markdowns <- contains annotated markdowns for individual figure development
-  rMarkdowns <- contains RMarkdowns used to generate .md files
+__markdowns__ <- contains annotated markdowns for individual figure development
+  _rMarkdowns_ <- contains RMarkdowns used to generate .md files
   
-r scripts <- contains example scripts
+__r scripts__ <- contains example scripts
