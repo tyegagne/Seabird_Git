@@ -1,0 +1,208 @@
+---
+title: "Seabird Random Forest Model - June 2017"
+author: "Tyler Gagne"
+date: "6/1/2017"
+output: html_document
+---
+
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = "/Users/tgagne/Seabird_Git/data/csv")
+```
+
+```{r, echo=FALSE,include=FALSE}
+library(reshape)
+library(ggplot2)
+library(pdp)
+library(dplyr)
+library(caret)
+library(randomForest)
+library(ALEPlot)
+library(pdp)
+```
+
+
+########################################################
+###Set working directory and read in dataset############
+########################################################
+
+#read in new SAU data
+```{r}
+famandspp<-read.csv("SAULandings_familyandspp.csv", header = T)
+```
+#plot to take a look at it 
+```{r}
+a<-ggplot(famandspp,aes(x=year,y=sqrt(sumcatch)))+
+  geom_line(aes(color=Taxon.Name))+theme_bw()
+```
+#recast and from in to df with columns for catch taxa
+```{r}
+df <- data.frame(cast(famandspp, year ~ Taxon.Name ))
+```
+
+######################
+#Bring in old dataset#
+######################
+```{r}
+bigger_data<-read.csv("final_dataset_may10.csv", header = T)
+###EDIT BUPE FORAGE DIST TO 350###
+BUPE_new_forage_dist <- 350
+bigger_data$forage_dist[bigger_data$spp == "BUPE"] <- BUPE_new_forage_dist
+###NOTE: for lag variable incorporation, must be run post 1951 due to NPGO availability up to 1950
+#subset out post 1950 data
+```
+####################################################
+#####Subset out post-1950 and merge in SAU data#####
+####################################################
+```{r}
+full_data <- subset(bigger_data,year >= 1951)
+#merge in SAU fisheries
+test<-merge(full_data,df,by="year")
+full_data <- test
+str(full_data)
+###################################################
+#set seed to replicate bootstrapping nature of RF##
+###################################################
+set.seed(123)
+```
+
+ __Data post-simulation, boxplots by year of trophic position estimates drawn from feather specimens.__
+ _Red dotted line represents 1951, the year from which all climate, climate lag, and fisheries data is complete and the time period cutoff for the data input in to the random forest model._
+ 
+```{r}
+plot <- bigger_data
+plot$spp <- factor(plot$spp, levels=c("LAAL", "BUPE", "WTSH", "WTTR", "BRBO","BRNO","WHTE","SOTE","TP"))
+ggplot(plot)+
+  geom_boxplot(aes(x=year,y=tp,group=as.factor(year)),outlier.shape = NA)+
+  facet_wrap(~spp,ncol = 4)+
+  geom_vline(xintercept=1951,linetype="dotted",color = "red")+
+  theme_classic()+
+  theme(axis.title.y=element_blank(),
+                       strip.background = element_blank(),
+                       panel.border = element_rect(colour = "black", fill=NA, size=.5),
+                       legend.position = c(0.15, 0.8),
+                       legend.key.size = unit(.75, "cm"),
+                       legend.title=element_blank(),
+                       strip.text=element_text(hjust=0))+ylab("trophic position")+
+  stat_summary(fun.y=mean, geom="line", aes(group=1)) 
+```
+
+```{r}
+#################################
+#################################
+#####Full model Development######
+#################################
+#create data partition for training set 
+InTrain<-createDataPartition(full_data$spp,p=0.8,list=FALSE)
+#partion out training set
+training1<-full_data[InTrain,]
+#partition out validation/test set
+testing1<-full_data[-InTrain,]
+Seabird_Random_Forest <- randomForest(tp ~ #current climate
+                            MEIave_by_year +PDOave_by_year +NPGOyear_mean +avgTemp +
+                            #lagged climate
+                            PDOlag1 +NPGOlag1 +avgTemplag1 +MEIlag1 +
+                            #prey pressure/abundance
+                            Carangidae +Exocoetidae +Mullidae +Ommastrephidae +
+                            #morphology
+                            forage_dist + wing_load + spp + 
+                            #timeline
+                            year,
+                          data=training1,
+                          importance = TRUE,
+                          ntree = 2000)
+
+```
+
+__Variable importance and OOB error improvement__
+We utilized a variable importance metric that measures reduction of mean squared error of a model when a predictor is randomly permuted (i.e. ‘noised up’), which allows for a rank order of variable influence on the model.
+
+```{r, fig.width=10, fig.height=5,echo=FALSE}
+par(mfrow = c(1,2))
+#variable importance plot
+varImpPlot(Seabird_Random_Forest, type = 1)
+#ntree error plot
+plot(Seabird_Random_Forest)
+```
+
+__Partial dependence plots__
+Partial dependence plots visualize the average partial relationship between the predicted response and a predictor conditioned on all other predictors. 
+
+```{r, fig.width=10, fig.height=10,echo=FALSE}
+##################################
+##Conventional partial plot loop##
+##################################
+sonarimp <- importance(Seabird_Random_Forest)
+impvar<- rownames(sonarimp)[order(sonarimp[,1],decreasing = TRUE)]
+op <- par(no.readonly = TRUE)
+par(mfrow = c(4, 4))
+par(mar = c(2.5, 3.5, 1, 0.5))
+par(mgp = c(1.5, 0.5, 0))
+par(oma = c(0, 0, 3, 0))
+for(i in 1:length(impvar)) {
+imptvar <- impvar[i]
+pd <- partial(Seabird_Random_Forest, pred.var = imptvar)
+plot(pd[,1],pd[,2],type = 'l', xlab = colnames(pd)[1],ylab = 'tp')}
+mtext("Partial dependency plots for Sea Around Us Project data random forest", outer = TRUE, side = 3, cex = 1.2, line =1)
+```
+
+__Partial dependence surface plots__
+
+Selection of interactions between predictors and trophic position response. Yellow cells indicate relatively higher trophic position, relatively lower is blue. Polygons indicate the convex hull of the training values.
+
+```{r, fig.width=10, fig.height=10,echo=FALSE}
+load("partialData_may30.RData")
+b1<-plotPartial(a1,chull=TRUE,train=training1,at= )
+b2<-plotPartial(a2,chull=TRUE,train=training1,at= ) #chull is logical indicating whether to show convex hull of training values
+b3<-plotPartial(a3,chull=TRUE,train=training1,at= )
+b4<-plotPartial(a4,chull=TRUE,train=training1,at= )
+b5<-plotPartial(a5,chull=TRUE,train=training1,at= )
+b6<-plotPartial(a6,chull=TRUE,train=training1,at= )
+b7<-plotPartial(a7,chull=TRUE,train=training1,at= )
+b8<-plotPartial(a8,chull=TRUE,train=training1,at= )
+b9<-plotPartial(a9,chull=TRUE,train=training1,at= )
+b10<-plotPartial(a10,chull=TRUE,train=training1,at=)
+b11<-plotPartial(a11,chull=TRUE,train=training1,at=)
+b12<-plotPartial(a12,chull=TRUE,train=training1,at= )
+b13<-plotPartial(a13,chull=TRUE,train=training1,at= )
+#b14<-plotPartial(a14,chull=TRUE,train=training1,at= )
+grid.arrange(b1,b2,b3,b4,b5,b6,b7,b8,b9,b10,b11,b12,b13,ncol=4,nrow = 4)
+```
+
+__Individual conditional expectation (ICE) plots__
+
+ICE plots function as refined partial dependence plots showing the functional relationship between the predicted response and the feature for a subset of individual observations. ICE plots effectively highlight the variation in fitted values. Predictors are pinched at minimum observed value such that the right vertical axis displays change in the response over the baseline as fraction of the response’s observed range. While the left y-axis shows a conventional, centered conditional response akin to a traditional partial dependence plot (yellow highlighted black line). Plots showing wedges acorss their range are more interactive (forage dist, wingload,MEIave, avgTemplag1, etc) than those showing primarily parallel responses which tend to be addititive (year, mullidae, MEI lag1). Plots are rank ordered by variable importance as a measure of percent mean squared error reduction under permutation. 
+
+
+####################################
+###BUILDING ICE PLOTS FOR FIGURE###
+####################################
+```{r}
+library(ICEbox)
+Z <- subset(training1, select = c("tp", "MEIave_by_year","PDOave_by_year","NPGOyear_mean" ,"avgTemp" ,
+                                  "PDOlag1", "NPGOlag1","avgTemplag1" ,"MEIlag1" ,
+                                  "Carangidae" ,"Exocoetidae" ,"Mullidae" ,"Ommastrephidae" ,
+                                  "forage_dist" , "wing_load" , "spp" , 
+                                  "year"))
+final_fit <- randomForest(Z[,2:17],Z[,1],ntree = 2000, importance = TRUE)
+sonarimp <- importance(final_fit)
+impvar<- rownames(sonarimp)[order(sonarimp[,1],decreasing = TRUE)]
+impvar <- impvar[2:16]
+```
+
+```{r, fig.width=10, fig.height=10,echo=FALSE, message = FALSE}
+plot.new()
+op <- par(no.readonly = TRUE)
+par(mfrow = c(4, 4))
+par(mar = c(2.5, 3.5, 1, 1.5))
+par(mgp = c(1.5, 0.5, 0))
+par(oma = c(0, 0, 3, 0))
+
+for(i in 1:length(impvar)) {
+  imptvar <- impvar[i]
+  pd_ice <- ice(object = final_fit, X = Z[,2:17], y = Z[,1], predictor = imptvar, frac_to_build = .1,verbose = FALSE)
+  plot(pd_ice, x_quantile = TRUE, plot_pdp = TRUE, frac_to_plot = 1, centered = TRUE,pts_preds_size = .5)}
+
+mtext("Individual conditional expectation plots for Sea Around Us Project data random forest", outer = TRUE, side = 3, cex = 1.2, line =1)
+```
+
+
