@@ -2,7 +2,7 @@
 title: "Figure1_longitudinaltrend"
 author: "Tyler Gagne"
 date: "6/8/2017"
-output: md_document
+output: github_document
 ---
 
 ```{r "setup", include=FALSE}
