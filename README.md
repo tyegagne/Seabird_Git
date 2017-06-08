@@ -12,7 +12,6 @@ The file structure is as follows:
 data <- contains CSV and .rData files used in construction of markdowns
 
 markdowns <- contains annotated markdowns for individual figure development (this is probably where you want to go) rMarkdowns <- contains orginal RMarkdown scripts used to generate .md files
-r scripts <- contains some example scripts
 
 __Long form markdown out below__
 see individual markdowns in markdown folder if interested in single section (mirror copy splits)
