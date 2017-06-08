@@ -445,37 +445,6 @@ Selection of interactions between predictors and trophic position response. Yell
 
 ICE plots function as refined partial dependence plots showing the functional relationship between the predicted response and the feature for a subset of individual observations. ICE plots effectively highlight the variation in fitted values. Predictors are pinched at minimum observed value such that the right vertical axis displays change in the response over the baseline as fraction of the response’s observed range. While the left y-axis shows a conventional, centered conditional response akin to a traditional partial dependence plot (yellow highlighted black line). Plots showing wedges acorss their range are more interactive (forage dist, wingload,MEIave, avgTemplag1, etc) than those showing primarily parallel responses which tend to be addititive (year, mullidae, MEI lag1). Plots are rank ordered by variable importance as a measure of percent mean squared error reduction under permutation.
 
-BUILDING ICE PLOTS FOR FIGURE
-
-``` r
-library(ICEbox)
-```
-
-    ## Loading required package: sfsmisc
-
-    ## 
-    ## Attaching package: 'sfsmisc'
-
-    ## The following object is masked from 'package:data.table':
-    ## 
-    ##     last
-
-    ## The following object is masked from 'package:dplyr':
-    ## 
-    ##     last
-
-``` r
-Z <- subset(training1, select = c("tp", "MEIave_by_year","PDOave_by_year","NPGOyear_mean" ,"avgTemp" ,
-                                  "PDOlag1", "NPGOlag1","avgTemplag1" ,"MEIlag1" ,
-                                  "Carangidae" ,"Exocoetidae" ,"Mullidae" ,"Ommastrephidae" ,
-                                  "forage_dist" , "wing_load" , "spp" , 
-                                  "year"))
-final_fit <- randomForest(Z[,2:17],Z[,1],ntree = ntree, importance = TRUE)
-sonarimp <- importance(final_fit)
-impvar<- rownames(sonarimp)[order(sonarimp[,1],decreasing = TRUE)]
-impvar <- impvar[2:16]
-```
-
 <img src="README_files/figure-markdown_github/unnamed-chunk-20-1.png" width="960" />
 
 **Single Column Imp Plot**
