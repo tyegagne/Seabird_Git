@@ -8,7 +8,7 @@ library(ggplot2)
 library(data.table)
 library(mgcv)
 library(gridExtra)
-setwd("/Users/tgagne/Documents/Spring 2017/Seabird TP/Data/CSV")
+setwd("/Users/tgagne/Seabird_Git/data/csv")
 set.seed(4567)
 
 #raw AA-isotope data
