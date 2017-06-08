@@ -24,16 +24,17 @@ library(pdp)
 
 _Set working directory and read in dataset_
 
-read in new SAU data
+Read in reconstuctured Sea Around Us project data
 ```{r}
 famandspp<-read.csv("SAULandings_familyandspp.csv", header = T)
 ```
 a plot to take a look at it 
-```{r}
+```{r,fig.retina=2}
 a<-ggplot(famandspp,aes(x=year,y=sqrt(sumcatch)))+
   geom_line(aes(color=Taxon.Name))+theme_bw()
 a
 ```
+
 recast and from in to df with columns for catch taxa
 ```{r}
 df <- data.frame(cast(famandspp, year ~ Taxon.Name ))
@@ -65,7 +66,7 @@ set.seed(123)
  __Data post-simulation, boxplots by year of trophic position estimates drawn from feather specimens.__
  _Red dotted line represents 1951, the year from which all climate, climate lag, and fisheries data is complete and the time period cutoff for the data input in to the random forest model._
  
-```{r}
+```{r,fig.retina=2}
 plot <- bigger_data
 plot$spp <- factor(plot$spp, levels=c("LAAL", "BUPE", "WTSH", "WTTR", "BRBO","BRNO","WHTE","SOTE","TP"))
 ggplot(plot,aes(x=year,y=tp))+
@@ -83,6 +84,7 @@ ggplot(plot,aes(x=year,y=tp))+
   stat_summary(fun.y=mean, geom="line", aes(group = 1)) 
 ```
 
+This the syntax input of the randomForest model input. ntree is the number of trees used to build the model. A data partition to speed up/create a testset. Then a formula expression of the model to be built
 ```{r}
 #################################
 #################################
@@ -115,7 +117,7 @@ Seabird_Random_Forest <- randomForest(tp ~ #current climate
 __Variable importance and OOB error improvement__
 We utilized a variable importance metric that measures reduction of mean squared error of a model when a predictor is randomly permuted (i.e. ‘noised up’), which allows for a rank order of variable influence on the model.
 
-```{r, fig.width=10, fig.height=5,echo=FALSE}
+```{r, fig.width=10, fig.height=5,echo=FALSE,fig.retina=2}
 par(mfrow = c(1,2))
 #variable importance plot
 varImpPlot(Seabird_Random_Forest, type = 1)
@@ -126,7 +128,7 @@ plot(Seabird_Random_Forest)
 __Partial dependence plots__
 Partial dependence plots visualize the average partial relationship between the predicted response and a predictor conditioned on all other predictors. 
 
-```{r, fig.width=10, fig.height=10,echo=FALSE}
+```{r, fig.width=10, fig.height=10,echo=FALSE,fig.retina=2}
 ##################################
 ##Conventional partial plot loop##
 ##################################
@@ -148,7 +150,7 @@ __Partial dependence surface plots__
 
 Selection of interactions between predictors and trophic position response. Yellow cells indicate relatively higher trophic position, relatively lower is blue. Polygons indicate the convex hull of the training values.
 
-```{r, fig.width=10, fig.height=10,echo=FALSE}
+```{r, fig.width=10, fig.height=10,echo=FALSE,fig.retina=2}
 load("partialData_may30.RData")
 b1<-plotPartial(a1,chull=TRUE,train=training1,at= )
 b2<-plotPartial(a2,chull=TRUE,train=training1,at= ) #chull is logical indicating whether to show convex hull of training values
@@ -187,7 +189,7 @@ impvar<- rownames(sonarimp)[order(sonarimp[,1],decreasing = TRUE)]
 impvar <- impvar[2:16]
 ```
 
-```{r, fig.width=10, fig.height=10,echo=FALSE, message = FALSE}
+```{r, fig.width=10, fig.height=10,echo=FALSE, message = FALSE,fig.retina=2}
 plot.new()
 op <- par(no.readonly = TRUE)
 par(mfrow = c(4, 4))
