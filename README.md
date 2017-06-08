@@ -16,7 +16,7 @@ markdowns <- contains annotated markdowns for individual figure development (thi
 __Long form markdown out below__
 see individual markdowns in markdown folder if interested in single section (mirror copy splits)
 
-Build function to draw random AA samples from analytic's distribution
+Build function to draw random AA samples from analytic's distribution and generate dataset.
 
 ``` r
 N <- 1000
@@ -35,7 +35,7 @@ GetTP <- function(anID){
   return(TPforID)}
 ```
 
-Apply function to list
+Run for loop to generate longitudinal plots of trophic position accorss time.
 
 ``` r
 sppx<-c("LAAL","BUPE","WTSH","WTTR","BRBO","BRNO","WHTE","SOTE","TP")         # adjust order taxonomically 
@@ -98,7 +98,7 @@ for(x in 1:length(sppx)){
 
 <img src="README_files/figure-markdown_github/unnamed-chunk-4-1.png" width="576" />
 
-**Big MC/MC loop to run and generate plots for each species**
+**Bayesian MCMC hierarchical mixing model to estimate proportion of prey contributing to diet at expected trophic position **
 
 ``` r
 sppx <- c("SOTE", "WTSH", "BRBO", "BRNO", "LAAL", "BUPE", "WTTR", "WHTE")
@@ -237,6 +237,9 @@ ggplot(data_box, aes(x=x))+geom_line(aes(y=median,color = source),size = 1)+scal
 
 <img src="README_files/figure-markdown_github/unnamed-chunk-7-1.png" width="672" />
 
+
+**Random Forest model development**
+
 *Set working directory and read in dataset*
 
 Read in reconstuctured Sea Around Us project data
@@ -245,7 +248,7 @@ Read in reconstuctured Sea Around Us project data
 famandspp<-read.csv("SAULandings_familyandspp.csv", header = T)
 ```
 
-a plot to take a look at it
+quick plot to take a look at it
 
 ``` r
 a<-ggplot(famandspp,aes(x=year,y=sqrt(sumcatch)))+
