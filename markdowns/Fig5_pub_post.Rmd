@@ -1,0 +1,166 @@
+---
+title: "Fig5_pub_post"
+author: "Tyler Gagne"
+date: "6/8/2017"
+output: github_document
+---
+
+```{r "setup", include=FALSE}
+knitr::opts_knit$set(root.dir = "/Users/tgagne/Seabird_Git/data/csv")
+```
+
+```{r, include=FALSE}
+library(reshape)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+library(randomForest)
+#partial 2d - dependence data : df1 - df12
+load("convenpdepData_June6.RData")
+#partial 3d - dependence data : a1 - a14
+load("partialData_may30.RData")
+#varimp scale data
+load("scale_June6.RData")
+#rf model
+final_fit <- readRDS("final_fit_full_may26_SAU.rds")
+
+```
+
+__Single Column Imp Plot__
+
+generate and index variable importance single column gradient plot
+```{r,error=FALSE}
+importance <- as.data.frame(melt(importance(final_fit,type=1)))
+###importance gradient###
+importance <- importance[-c(15,16),] #remove year and spp
+#scale 0 to 1 
+range01 <- function(x){(x-min(x))/(max(x)-min(x))}
+importance$value <- range01(importance$value)
+importance$value <- round(importance$value,digits=2)
+importance$X1 <- factor(importance$X1, levels = importance$X1[order(importance$value)])
+scale<-ggplot(importance,aes(x = X2, y = X1, fill = value))+
+  geom_tile(show.legend = FALSE) + 
+  geom_label(aes(label=value),size = 2.5,fill = "white",label.r = unit(0,"lines"),nudge_x = 0,nudge_y = -.05,vjust = "top",hjust="center")+
+  geom_label(aes(label=X1),size = 2.5, fill = "white",label.r = unit(0,"lines"),nudge_x = 0,nudge_y = 0.1,vjust = "bottom",hjust="center")+
+  theme_classic() +
+  scale_fill_gradient(low = "white",high = "black") +
+  scale_x_discrete(position = "top") +
+  theme(axis.title.x.top =element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.y=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.y=element_blank(),
+        axis.ticks.x=element_blank())+
+  theme_void()
+```
+
+rename partial dependence dataframe columns
+```{r}
+colnames(df1) <- c("forage_dist","trophic_position")
+colnames(df2) <- c("carangidae","trophic_position")
+colnames(df3) <- c("mullidae","trophic_position")
+colnames(df4) <- c("MEI","trophic_position")
+colnames(df5) <- c("ommastrephidae","trophic_position")
+colnames(df6) <- c("wing_load","trophic_position")
+colnames(df7) <- c("PDOlag","trophic_position")
+colnames(df8) <- c("NPGO","trophic_position")
+colnames(df9) <- c("MEIlag","trophic_position")
+colnames(df10) <- c("SST","trophic_position")
+colnames(df11) <- c("PDO","trophic_position")
+colnames(df12) <- c("SSTlag","trophic_position")
+
+#melt and reshape
+a<-Reduce(function(x, y) merge(x, y, all=TRUE), list(df1, df2, df3,df4,df5,df6,df7,df8,df9,df10,df11,df12))
+b<-as.data.frame(scale(a[,2:13]))
+a<-cbind(a$trophic_position,b)
+a<-melt(a,id.vars = c(1))
+colnames(a) <- c("trophic_position","predictor","value")
+```
+
+__Develop faceted partial dependence plot__
+```{r}
+a$predictor <- factor(a$predictor, levels=c("carangidae", "mullidae", "ommastrephidae", "wing_load", "forage_dist","PDOlag","NPGO","MEIlag","SST","PDO","SSTlag","MEI"))
+pdep2d<-ggplot(a,aes(y=trophic_position,x=value))+geom_line()+facet_wrap(~predictor,nrow=3)+xlab(NULL)+
+  theme(axis.title.y=element_blank(),axis.ticks.y=element_blank(),strip.background = element_blank(),panel.border = element_rect(colour = "black", fill=NA, size=.5),legend.title=element_blank(),
+                              strip.text=element_text(hjust=0))
+```
+
+
+Build heatmap function that allows partial depenedence data input, specify axes, and ramp gradient color hex.
+```{r}
+heatmap <- function(data,x,y,high.col){
+  x<-substitute(x)
+  y<-substitute(y)
+  yhat <-data[,3]
+  g<-ggplot(data,aes_string(x=x,y=y,fill=yhat))+geom_tile(show.legend = FALSE)+scale_fill_gradient(low="white", high= high.col)+
+    scale_y_continuous(expand = c(0,0)) +scale_x_continuous(expand = c(0,0)) +theme(axis.ticks.y=element_blank(),text=element_text(size=12, family="Calibri"),axis.ticks.x=element_blank())+theme_classic()
+    return(g)}
+  
+#Fish only - #66c2a5
+#eco morph - #fdae61
+#climate - #3288bd
+#mix - #d53e4f
+```
+
+```{r,include=FALSE}
+wing_x_forage<-heatmap(data=a1,x=forage_dist,y=wing_load,"#fdae61")
+caran_x_mulli<-heatmap(data=a2,x=Carangidae/10000,y=Mullidae/100,"#66c2a5")
+PDOlag_x_NPGO<-heatmap(data=a3,x=PDOlag1,y=NPGOyear_mean,"#3288bd")
+SST_x_PDO<-heatmap(data=a4,x=avgTemp,y=PDOave_by_year,"#3288bd")
+omma_x_caran<-heatmap(data=a5,x=Ommastrephidae/10000,y=Carangidae/10000,"#66c2a5")
+omma_x_mull<-heatmap(data=a6,x=Ommastrephidae/10000,y=Mullidae/100,"#66c2a5")
+NPGOlag_x_exoco<-heatmap(data=a7,x=NPGOlag1,y=Exocoetidae,"#d53e4f")
+MEI_x_NPGO<-heatmap(data=a8,x=MEIave_by_year,y=NPGOyear_mean,"#3288bd")
+caran_x_PDOlag<-heatmap(data=a9,x=Carangidae/10000,y=PDOlag1,"#d53e4f")
+omma_x_NPGO<-heatmap(data=a10,x=Ommastrephidae/10000,y=NPGOyear_mean,"#2ca25f")
+forage_x_omma<-heatmap(data=a12,x=forage_dist,y=Ommastrephidae/10000,"#d53e4f")
+
+```
+
+```{r,include=FALSE}
+##########################
+#Build grobs##
+##########################
+#scaled importance
+g1 <- ggplotGrob(scale)
+#pdep 2d plots
+g2 <- ggplotGrob(pdep2d)
+#interactive plots
+wing_x_forage <- ggplotGrob(wing_x_forage)
+caran_x_mulli <- ggplotGrob(caran_x_mulli)
+PDOlag_x_NPGO <- ggplotGrob(PDOlag_x_NPGO)
+SST_x_PDO <- ggplotGrob(SST_x_PDO)
+omma_x_caran <- ggplotGrob(omma_x_caran)
+MEI_x_NPGO <- ggplotGrob(MEI_x_NPGO)
+caran_x_PDOlag <- ggplotGrob(caran_x_PDOlag)
+forage_x_omma <- ggplotGrob(forage_x_omma)
+
+lay<-rbind(c(1,2,2,2,2,3,3,4,4),
+           c(1,2,2,2,2,5,5,6,6),
+           c(1,2,2,2,2,7,7,8,8))
+
+```
+
+```{r,fig.width=13, fig.height=6,fig.retina=2}
+grid.arrange(
+  #first column
+  g1,
+  #second facet block
+  g2,
+  
+  #row1
+  caran_x_mulli,
+  omma_x_caran,
+  #row2
+  wing_x_forage,
+  forage_x_omma,
+  
+  #row3
+  PDOlag_x_NPGO,
+  SST_x_PDO,
+
+            layout_matrix = lay)
+```
+
+
+
