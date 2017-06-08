@@ -21,27 +21,24 @@ library(pdp)
 ```
 
 
-########################################################
-###Set working directory and read in dataset############
-########################################################
 
-#read in new SAU data
+_Set working directory and read in dataset_
+
+read in new SAU data
 ```{r}
 famandspp<-read.csv("SAULandings_familyandspp.csv", header = T)
 ```
-#plot to take a look at it 
+a plot to take a look at it 
 ```{r}
 a<-ggplot(famandspp,aes(x=year,y=sqrt(sumcatch)))+
   geom_line(aes(color=Taxon.Name))+theme_bw()
 ```
-#recast and from in to df with columns for catch taxa
+recast and from in to df with columns for catch taxa
 ```{r}
 df <- data.frame(cast(famandspp, year ~ Taxon.Name ))
 ```
 
-######################
-#Bring in old dataset#
-######################
+_Bring in old dataset_
 ```{r}
 bigger_data<-read.csv("final_dataset_may10.csv", header = T)
 ###EDIT BUPE FORAGE DIST TO 350###
@@ -50,9 +47,8 @@ bigger_data$forage_dist[bigger_data$spp == "BUPE"] <- BUPE_new_forage_dist
 ###NOTE: for lag variable incorporation, must be run post 1951 due to NPGO availability up to 1950
 #subset out post 1950 data
 ```
-####################################################
-#####Subset out post-1950 and merge in SAU data#####
-####################################################
+
+_Subset out post-1950 and merge in SAU data_
 ```{r}
 full_data <- subset(bigger_data,year >= 1951)
 #merge in SAU fisheries
@@ -173,9 +169,8 @@ __Individual conditional expectation (ICE) plots__
 ICE plots function as refined partial dependence plots showing the functional relationship between the predicted response and the feature for a subset of individual observations. ICE plots effectively highlight the variation in fitted values. Predictors are pinched at minimum observed value such that the right vertical axis displays change in the response over the baseline as fraction of the response’s observed range. While the left y-axis shows a conventional, centered conditional response akin to a traditional partial dependence plot (yellow highlighted black line). Plots showing wedges acorss their range are more interactive (forage dist, wingload,MEIave, avgTemplag1, etc) than those showing primarily parallel responses which tend to be addititive (year, mullidae, MEI lag1). Plots are rank ordered by variable importance as a measure of percent mean squared error reduction under permutation. 
 
 
-####################################
-###BUILDING ICE PLOTS FOR FIGURE###
-####################################
+BUILDING ICE PLOTS FOR FIGURE
+
 ```{r}
 library(ICEbox)
 Z <- subset(training1, select = c("tp", "MEIave_by_year","PDOave_by_year","NPGOyear_mean" ,"avgTemp" ,
