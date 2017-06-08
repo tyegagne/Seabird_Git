@@ -5,7 +5,7 @@ Tyler Gagne
 
 public repository for seabird CSIA-AA trophic position analysis
 
-In this repository you will find script and markdown examples of analysis used to generate the figures in Gagne, Hyrenbach, Hagemann, and Van Houtan, In Prep.
+In this repository you will find script and markdown examples of analysis used to generate the figures in _Gagne, Hyrenbach, Hagemann, and Van Houtan, In Prep._
 
 The file structure is as follows:
 
@@ -15,7 +15,7 @@ markdowns <- contains annotated markdowns for individual figure development (thi
 r scripts <- contains some example scripts
 
 __Long form markdown out below__
-See individual markdowns in markdown folder if interested in single section (mirror copy splits)
+see individual markdowns in markdown folder if interested in single section (mirror copy splits)
 
 Build function to draw random AA samples from analytic's distribution
 
