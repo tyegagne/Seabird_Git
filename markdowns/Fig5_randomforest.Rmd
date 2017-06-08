@@ -2,7 +2,7 @@
 title: "Seabird Random Forest Model - June 2017"
 author: "Tyler Gagne"
 date: "6/1/2017"
-output: html_document
+output: md_document
 ---
 
 ```{r "setup", include=FALSE}
