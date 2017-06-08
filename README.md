@@ -7,7 +7,7 @@ The file structure is as follows:
 
 __data__ <- contains CSV and .rData files used in construction of markdowns
 
-__markdowns__ <- contains annotated markdowns for individual figure development
+__markdowns__ <- contains annotated markdowns for individual figure development (this is probably where you want to go)
   _rMarkdowns_ <- contains RMarkdowns used to generate .md files
   
 __r scripts__ <- contains example scripts
