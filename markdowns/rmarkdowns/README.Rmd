@@ -5,6 +5,18 @@ date: "6/8/2017"
 output: github_document
 ---
 
+**A public repository for seabird CSIA-AA trophic position analysis**
+
+This is a repository of abbreviated analysis script and markdown examples used to generate the figures in *Gagne, Hyrenbach, Hagemann, and Van Houtan, In Prep.*
+
+**The file structure is as follows:**
+
+**data** <- contains CSV and .rData files used in construction of markdowns
+**markdowns** <- contains annotated markdowns for individual figure development 
+**rMarkdowns** <- contains orginal RMarkdown scripts used to generate .md files
+
+*A long markdown is below, see individual markdowns in *markdown* folder*
+
 ```{r "setup", include=FALSE}
 knitr::opts_knit$set(root.dir = "/Users/tgagne/Seabird_Git/data/csv")
 ```
@@ -32,9 +44,12 @@ dataList = split(data, data$uc_id)
 ```
 
 
+**This is the function used to draw random compound amino acid estimate samples from the analytic lab's distributions**
 
+A single AA isotope normal distribution from a single specimen was used to generate 1000 compound specific amino acid isotopic values. We then calculated 1000 trophic position estimates using the mean of six trophic AAs  and one source AA. 
 
-Build function to draw random AA samples from analytic's distribution
+*The constants for beta and TEF are included in the function*
+
 ```{r}
 
 N <- 1000
@@ -52,7 +67,11 @@ GetTP <- function(anID){
   TPforID <- (((((ala.est + glu.est + ile.est + leu.est + pro.est + val.est)/6)) - phe.est - b)/TEF ) + 1 
   return(TPforID)}
 ```
-Apply function to list
+
+
+**We then run a *for* loop to generate longitudinal plots of trophic position across time.**
+
+We generated the time series plot by randomly drawing one TP estimate from each available year and fitting a loess model through the data. The loess model was then used to predict TP through the entire sequence 1890 to 2015, which was appended in to a dataset. We repeated process 1000 times for each species and for the ensemble; the median, and the 2.5% and 97% quantiles were then plotted. 
 
 ```{r, echo=FALSE,include=FALSE}
 TPforID_all = lapply(dataList, GetTP )                                  # apply function to list
@@ -136,7 +155,12 @@ library(R2jags)
 ```
 
 
-__Big MC/MC loop to run and generate plots for each species__
+__This is the Bayesian MCMC hierarchical mixing model that is used to estimate the proportion of prey contributing to diet at expected trophic positions__
+
+We used hierarchal Bayesian mixing models (R package MixSIAR) to visualize shifts in diet proportions of prey sources across time. TP over time (Fig. 1) was the mixture biotracer response as a function of prey item assimilation. TL of 6 prey items were the source biotracer input. Year was incorporated as a continuous random effect. Uncertainty in source data TLs was built-in with estimates of mean and standard error from the literature and FishBase. We used a process error structure to account for variation in seabird trophic levels14. A process error structure permits consumers to sample in different locations from each prey source distribution, and subsequent variation in consumer tracer values is accounted for in this sampling process. Because trophic magnification from prey to predator is one, discrimination factors were fixed at one. 
+Informative Dirichlet priors with the same weight as an uninformative prior were generated using the mean prey contribution estimates across the eight seabird species2. We generated the priors with the sum of the Dirichlet hyper parameters kept equivalent in weight to an uninformative prior (i.e. 4 for 4 source groups, Fig. S5) while maintaining the informative distribution. The mixing model was run for 3 chains over 100,000 iterations, removing 50,000 for burn-in and thinning by a factor of 50. 
+
+*NOTE: this mardown is an abbreviated short MCMC run*
 ```{r,error=FALSE,tidy=TRUE,message = FALSE,warning=FALSE,results = "hide"}
 sppx<-c("SOTE","WTSH","BRBO","BRNO","LAAL","BUPE","WTTR","WHTE")
 #sppx<- "SOTE"
@@ -284,11 +308,15 @@ library(ALEPlot)
 library(pdp)
 ```
 
+Random Forest model development
 
 
 _Set working directory and read in dataset_
 
 Read in reconstuctured Sea Around Us project data
+
+
+
 ```{r}
 famandspp<-read.csv("SAULandings_familyandspp.csv", header = T)
 ```
@@ -349,6 +377,8 @@ ggplot(plot,aes(x=year,y=tp))+
 ```
 
 This the syntax input of the randomForest model input. ntree is the number of trees used to build the model. A data partition to speed up/create a testset. Then a formula expression of the model to be built
+
+*NOTE: This is an abbreviate randomForest model, ntree is fixed at 100 to reduce computation time.
 ```{r}
 #################################
 #################################
