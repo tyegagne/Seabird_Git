@@ -71,7 +71,7 @@ GetTP <- function(anID){
 
 **We then run a *for* loop to generate longitudinal plots of trophic position across time.**
 
-We generated the time series plot by randomly drawing one TP estimate from each available year and fitting a loess model through the data. The loess model was then used to predict TP through the entire sequence 1890 to 2015, which was appended in to a dataset. We repeated process 1000 times for each species and for the ensemble; the median, and the 2.5% and 97% quantiles were then plotted. 
+We generated the time series plot by randomly drawing one TP estimate from each available year and fitting a loess model through the data. The loess model was then used to predict TP through the entire sequence 1890 to 2015, which was appended in to a dataset. We repeated process 1000 times for each species and for the all-species ensemble; the median. The 50%, 2.5% and 97% quantiles are then plotted. 
 
 ```{r, echo=FALSE,include=FALSE}
 TPforID_all = lapply(dataList, GetTP )                                  # apply function to list
@@ -84,7 +84,7 @@ data<-subset(data, value == "ave")
 total<-merge(data,TPforID_all, by="uc_id")
 ```
 
-```{r,fig.width=6, fig.height=13,fig.retina=2}
+```{r,fig.width=6, fig.height=13,fig.retina=2,tidy=TRUE}
 sppx<-c("LAAL","BUPE","WTSH","WTTR","BRBO","BRNO","WHTE","SOTE","TP")         # adjust order taxonomically 
 
 S <- 1000
@@ -158,9 +158,10 @@ library(R2jags)
 __This is the Bayesian MCMC hierarchical mixing model that is used to estimate the proportion of prey contributing to diet at expected trophic positions__
 
 We used hierarchal Bayesian mixing models (R package MixSIAR) to visualize shifts in diet proportions of prey sources across time. TP over time (Fig. 1) was the mixture biotracer response as a function of prey item assimilation. TL of 6 prey items were the source biotracer input. Year was incorporated as a continuous random effect. Uncertainty in source data TLs was built-in with estimates of mean and standard error from the literature and FishBase. We used a process error structure to account for variation in seabird trophic levels14. A process error structure permits consumers to sample in different locations from each prey source distribution, and subsequent variation in consumer tracer values is accounted for in this sampling process. Because trophic magnification from prey to predator is one, discrimination factors were fixed at one. 
-Informative Dirichlet priors with the same weight as an uninformative prior were generated using the mean prey contribution estimates across the eight seabird species2. We generated the priors with the sum of the Dirichlet hyper parameters kept equivalent in weight to an uninformative prior (i.e. 4 for 4 source groups, Fig. S5) while maintaining the informative distribution. The mixing model was run for 3 chains over 100,000 iterations, removing 50,000 for burn-in and thinning by a factor of 50. 
+Informative Dirichlet priors with the same weight as an uninformative prior were generated using the mean prey contribution estimates across the eight seabird species2. We generated the priors with the sum of the Dirichlet hyper parameters kept equivalent in weight to an uninformative prior (i.e. 4 for 4 source groups, Fig. S5) while maintaining the informative distribution. 
 
-*NOTE: this mardown is an abbreviated short MCMC run*
+*The mixing model (for publication) was run for 3 chains over 100,000 iterations, removing 50,000 for burn-in and thinning by a factor of 50. 
+*NOTE: this mardown is an abbreviated short MCMC run, convergence is not acheived*
 ```{r,error=FALSE,tidy=TRUE,message = FALSE,warning=FALSE,results = "hide"}
 sppx<-c("SOTE","WTSH","BRBO","BRNO","LAAL","BUPE","WTTR","WHTE")
 #sppx<- "SOTE"
@@ -197,7 +198,7 @@ resid_err <- FALSE
 process_err <- TRUE
 write_JAGS_model(model_filename, resid_err,process_err, mix, source)
 #run model
-jags.1 <- run_model(run="test",mix,source,discr,model_filename,
+jags.1 <- run_model(run="short",mix,source,discr,model_filename,
                     alpha.prior = TP_prior,resid_err,process_err)
 ##########################
 ##########################
@@ -280,7 +281,7 @@ source_names <- source$source_names
 ```
 
 
-```{r, fig.retina=2}
+```{r, fig.retina=2,fig.width=7, fig.height=10}
 
 data_box$spp <- as.factor(data_box$spp)
 data_box$spp <- factor(data_box$spp, levels=c("LAAL", "BUPE", "WTSH", "WTTR", "BRBO","BRNO","WHTE","SOTE","TP"))
@@ -310,24 +311,23 @@ library(pdp)
 
 Random Forest model development
 
-
 _Set working directory and read in dataset_
 
 Read in reconstuctured Sea Around Us project data
 
-
-
 ```{r}
 famandspp<-read.csv("SAULandings_familyandspp.csv", header = T)
 ```
-a plot to take a look at it 
+
+Lets take a look at it
+
 ```{r,fig.retina=2}
 a<-ggplot(famandspp,aes(x=year,y=sqrt(sumcatch)))+
   geom_line(aes(color=Taxon.Name))+theme_bw()
 a
 ```
 
-recast and from in to df with columns for catch taxa
+Lets recast and form in to data frame with columns for catch taxa
 ```{r}
 df <- data.frame(cast(famandspp, year ~ Taxon.Name ))
 ```
@@ -467,9 +467,6 @@ __Individual conditional expectation (ICE) plots__
 
 ICE plots function as refined partial dependence plots showing the functional relationship between the predicted response and the feature for a subset of individual observations. ICE plots effectively highlight the variation in fitted values. Predictors are pinched at minimum observed value such that the right vertical axis displays change in the response over the baseline as fraction of the response’s observed range. While the left y-axis shows a conventional, centered conditional response akin to a traditional partial dependence plot (yellow highlighted black line). Plots showing wedges acorss their range are more interactive (forage dist, wingload,MEIave, avgTemplag1, etc) than those showing primarily parallel responses which tend to be addititive (year, mullidae, MEI lag1). Plots are rank ordered by variable importance as a measure of percent mean squared error reduction under permutation. 
 
-
-BUILDING ICE PLOTS FOR FIGURE
-
 ```{r}
 library(ICEbox)
 Z <- subset(training1, select = c("tp", "MEIave_by_year","PDOave_by_year","NPGOyear_mean" ,"avgTemp" ,
@@ -519,7 +516,7 @@ final_fit <- readRDS("final_fit_full_may26_SAU.rds")
 
 __Single Column Imp Plot__
 
-generate and index variable importance single column gradient plot
+We generated a variable importance single column gradient plot. The variables are rank ordered by measure of variable importance as a measure of reduction in mean squared error under random permutation. Species and year are removed from the gradient for the figure 5 plot. 
 ```{r,error=FALSE}
 importance <- as.data.frame(melt(importance(final_fit,type=1)))
 ###importance gradient###
@@ -545,7 +542,7 @@ scale<-ggplot(importance,aes(x = X2, y = X1, fill = value))+
   theme_void()
 ```
 
-rename partial dependence dataframe columns
+Partial dependence data columns are renamed 
 ```{r}
 colnames(df1) <- c("forage_dist","trophic_position")
 colnames(df2) <- c("carangidae","trophic_position")
@@ -577,7 +574,7 @@ pdep2d<-ggplot(a,aes(y=trophic_position,x=value))+geom_line()+facet_wrap(~predic
 ```
 
 
-Build heatmap function that allows partial depenedence data input, specify axes, and ramp gradient color hex.
+Build heatmap/surface plot function that allows partial depenedence data input, specify axes, and ramp gradient color hex designation.
 ```{r}
 heatmap <- function(data,x,y,high.col){
   x<-substitute(x)
@@ -593,6 +590,7 @@ heatmap <- function(data,x,y,high.col){
 #mix - #d53e4f
 ```
 
+Generate suface plots
 ```{r,include=FALSE}
 wing_x_forage<-heatmap(data=a1,x=forage_dist,y=wing_load,"#fdae61")
 caran_x_mulli<-heatmap(data=a2,x=Carangidae/10000,y=Mullidae/100,"#66c2a5")
@@ -607,7 +605,7 @@ omma_x_NPGO<-heatmap(data=a10,x=Ommastrephidae/10000,y=NPGOyear_mean,"#2ca25f")
 forage_x_omma<-heatmap(data=a12,x=forage_dist,y=Ommastrephidae/10000,"#d53e4f")
 
 ```
-
+Grob generation and graphical matrix definition
 ```{r,include=FALSE}
 ##########################
 #Build grobs##
@@ -631,7 +629,7 @@ lay<-rbind(c(1,2,2,2,2,3,3,4,4),
            c(1,2,2,2,2,7,7,8,8))
 
 ```
-
+Arrange grobs with grid.arrange
 ```{r,fig.width=13, fig.height=6,fig.retina=2}
 grid.arrange(
   #first column
@@ -652,4 +650,4 @@ grid.arrange(
 
             layout_matrix = lay)
 ```
-
+Final fig (fig in pub received minor post-processing)

@@ -1,22 +1,23 @@
-README
+FrontEndCompilation
 ================
 Tyler Gagne
 6/8/2017
 
-public repository for seabird CSIA-AA trophic position analysis
+**A public repository for seabird CSIA-AA trophic position analysis**
 
-In this repository you will find script and markdown examples of analysis used to generate the figures in _Gagne, Hyrenbach, Hagemann, and Van Houtan, In Prep._
+This is a repository of abbreviated analysis script and markdown examples used to generate the figures in *Gagne, Hyrenbach, Hagemann, and Van Houtan, In Prep.*
 
-The file structure is as follows:
+**The file structure is as follows:**
 
-data <- contains CSV and .rData files used in construction of markdowns
+**data** &lt;- contains CSV and .rData files used in construction of markdowns **markdowns** &lt;- contains annotated markdowns for individual figure development **rMarkdowns** &lt;- contains orginal RMarkdown scripts used to generate .md files
 
-markdowns <- contains annotated markdowns for individual figure development (this is probably where you want to go) rMarkdowns <- contains orginal RMarkdown scripts used to generate .md files
+*A long markdown is below, see individual markdowns in *markdown\* folder\*
 
-__Long form markdown out below__
-see individual markdowns in markdown folder if interested in single section (mirror copy splits)
+**This is the function used to draw random compound amino acid estimate samples from the analytic lab's distributions**
 
-Build function to draw random AA samples from analytic's distribution and generate dataset.
+A single AA isotope normal distribution from a single specimen was used to generate 1000 compound specific amino acid isotopic values. We then calculated 1000 trophic position estimates using the mean of six trophic AAs and one source AA.
+
+*The constants for beta and TEF are included in the function*
 
 ``` r
 N <- 1000
@@ -35,70 +36,81 @@ GetTP <- function(anID){
   return(TPforID)}
 ```
 
-Run for loop to generate longitudinal plots of trophic position accorss time.
+**We then run a *for* loop to generate longitudinal plots of trophic position across time.**
+
+We generated the time series plot by randomly drawing one TP estimate from each available year and fitting a loess model through the data. The loess model was then used to predict TP through the entire sequence 1890 to 2015, which was appended in to a dataset. We repeated process 1000 times for each species and for the all-species ensemble; the median. The 50%, 2.5% and 97% quantiles are then plotted.
 
 ``` r
-sppx<-c("LAAL","BUPE","WTSH","WTTR","BRBO","BRNO","WHTE","SOTE","TP")         # adjust order taxonomically 
+sppx <- c("LAAL", "BUPE", "WTSH", "WTTR", "BRBO", "BRNO", "WHTE", "SOTE", "TP")  # adjust order taxonomically 
 
 S <- 1000
 
-par(mfrow=c(5,2), mai = c(.4, 0.4, 0.4, 0.4))                                 # build plot frame
-for(x in 1:length(sppx)){
-  if(x < 9) {
-    species_data <- subset(total, spp == sppx[x])
-  } else{
-    species_data <- total
-  }
-   tp_predict = as.data.frame(matrix(ncol=1000,nrow=126))
-  
-  for (i in 1:S){
-    new_df <- ddply(species_data,.(year),function(x) x[sample(nrow(x),1),])   # sample value from each available year
-    tp_est <- loess(tp ~ year, new_df,span = 1)                               # fit loess model through the series
-    tp_predict[i] <- as.data.frame(predict(tp_est,data.frame(year = seq(1890, 2015,1)))) # predict for all years
-  }
-  tp_predict$year <- seq(1890, 2015, by = 1)
-  test_data_long <- melt(tp_predict, id="year")
-  
-  #gather quantiles from data
-  sum_data<- do.call(data.frame,aggregate(value ~ year, data = test_data_long, function(x) c(quantile(x,.975),quantile(x,.025),median(x) )))
-  
-  #build plots
-  plot(sum_data$year,sum_data$value.V3, type = "l",col="blue",main = sppx[x], ylab = '',xlab = '',ylim=c(3.4,4.4))
-  lines(sum_data$year,sum_data$value.97.5.,col="light blue")
-  lines(sum_data$year,sum_data$value.2.5.,col="light blue")
-  
-  b<-1979
-  
-  #overlay Harrison et al. 1983 calculated trophic levels 
-  if(x < 9) {
-    z<-subset(preyMTL_data,spp = species_data$spp[x])
-    y<-z$ad_mean_tl[x]
-    points(b,y,pch = 20)
-    sd<-z$SE_mean_TL[x]
-    arrows(b,y-sd,b,y+sd, code=3, length=0.02, angle = 90)
-    abline(h=subset(sum_data, year == 1891, select = value.V3 ),lty = "dotted" )
-  }else{
-    b<- 1979
-    y<-mean(preyMTL_data$ad_mean_tl)
-    points(b,y, pch = 20)
-    sd<-mean(z$SE_mean_TL)
-    arrows(b,y-sd,b,y+sd, code=3, length=0.02, angle = 90)
-    abline(h=subset(sum_data, year == 1891, select = value.V3 ),lty = "dotted" )
-  }
-  
-  labels_axes <- c("")
-  y_ticks = c(3.4,3.5,3.6,3.7,3.8,3.9,4.0,4.1,4.2,4.3,4.4)
-  x_ticks = c(1900,1910,1920,1930,1940,1950,1960,1970,1980,1990,2000,2010)
-  axis(side = 1, at = x_ticks, labels = FALSE, outer = FALSE)
-  axis(side = 2, at = y_ticks, labels = TRUE, outer = FALSE)
-  
-  title(tp_est $pars $span, outer = TRUE, cex = 1.5, line = -2)
-}  
+par(mfrow = c(5, 2), mai = c(0.4, 0.4, 0.4, 0.4))  # build plot frame
+for (x in 1:length(sppx)) {
+    if (x < 9) {
+        species_data <- subset(total, spp == sppx[x])
+    } else {
+        species_data <- total
+    }
+    tp_predict = as.data.frame(matrix(ncol = 1000, nrow = 126))
+    
+    for (i in 1:S) {
+        new_df <- ddply(species_data, .(year), function(x) x[sample(nrow(x), 
+            1), ])  # sample value from each available year
+        tp_est <- loess(tp ~ year, new_df, span = 1)  # fit loess model through the series
+        tp_predict[i] <- as.data.frame(predict(tp_est, data.frame(year = seq(1890, 
+            2015, 1))))  # predict for all years
+    }
+    tp_predict$year <- seq(1890, 2015, by = 1)
+    test_data_long <- melt(tp_predict, id = "year")
+    
+    # gather quantiles from data
+    sum_data <- do.call(data.frame, aggregate(value ~ year, data = test_data_long, 
+        function(x) c(quantile(x, 0.975), quantile(x, 0.025), median(x))))
+    
+    # build plots
+    plot(sum_data$year, sum_data$value.V3, type = "l", col = "blue", main = sppx[x], 
+        ylab = "", xlab = "", ylim = c(3.4, 4.4))
+    lines(sum_data$year, sum_data$value.97.5., col = "light blue")
+    lines(sum_data$year, sum_data$value.2.5., col = "light blue")
+    
+    b <- 1979
+    
+    # overlay Harrison et al. 1983 calculated trophic levels
+    if (x < 9) {
+        z <- subset(preyMTL_data, spp = species_data$spp[x])
+        y <- z$ad_mean_tl[x]
+        points(b, y, pch = 20)
+        sd <- z$SE_mean_TL[x]
+        arrows(b, y - sd, b, y + sd, code = 3, length = 0.02, angle = 90)
+        abline(h = subset(sum_data, year == 1891, select = value.V3), lty = "dotted")
+    } else {
+        b <- 1979
+        y <- mean(preyMTL_data$ad_mean_tl)
+        points(b, y, pch = 20)
+        sd <- mean(z$SE_mean_TL)
+        arrows(b, y - sd, b, y + sd, code = 3, length = 0.02, angle = 90)
+        abline(h = subset(sum_data, year == 1891, select = value.V3), lty = "dotted")
+    }
+    
+    labels_axes <- c("")
+    y_ticks = c(3.4, 3.5, 3.6, 3.7, 3.8, 3.9, 4, 4.1, 4.2, 4.3, 4.4)
+    x_ticks = c(1900, 1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 
+        2000, 2010)
+    axis(side = 1, at = x_ticks, labels = FALSE, outer = FALSE)
+    axis(side = 2, at = y_ticks, labels = TRUE, outer = FALSE)
+    
+    title(tp_est$pars$span, outer = TRUE, cex = 1.5, line = -2)
+}
 ```
 
 <img src="README_files/figure-markdown_github/unnamed-chunk-4-1.png" width="576" />
 
-__Bayesian MCMC hierarchical mixing model to estimate proportion of prey contributing to diet at expected trophic position__
+**This is the Bayesian MCMC hierarchical mixing model that is used to estimate the proportion of prey contributing to diet at expected trophic positions**
+
+We used hierarchal Bayesian mixing models (R package MixSIAR) to visualize shifts in diet proportions of prey sources across time. TP over time (Fig. 1) was the mixture biotracer response as a function of prey item assimilation. TL of 6 prey items were the source biotracer input. Year was incorporated as a continuous random effect. Uncertainty in source data TLs was built-in with estimates of mean and standard error from the literature and FishBase. We used a process error structure to account for variation in seabird trophic levels14. A process error structure permits consumers to sample in different locations from each prey source distribution, and subsequent variation in consumer tracer values is accounted for in this sampling process. Because trophic magnification from prey to predator is one, discrimination factors were fixed at one. Informative Dirichlet priors with the same weight as an uninformative prior were generated using the mean prey contribution estimates across the eight seabird species2. We generated the priors with the sum of the Dirichlet hyper parameters kept equivalent in weight to an uninformative prior (i.e. 4 for 4 source groups, Fig. S5) while maintaining the informative distribution.
+
+*The mixing model (for publication) was run for 3 chains over 100,000 iterations, removing 50,000 for burn-in and thinning by a factor of 50. *NOTE: this mardown is an abbreviated short MCMC run, convergence is not acheived\*
 
 ``` r
 sppx <- c("SOTE", "WTSH", "BRBO", "BRNO", "LAAL", "BUPE", "WTTR", "WHTE")
@@ -131,7 +143,7 @@ for (x in 1:length(sppx)) {
     process_err <- TRUE
     write_JAGS_model(model_filename, resid_err, process_err, mix, source)
     # run model
-    jags.1 <- run_model(run = "test", mix, source, discr, model_filename, alpha.prior = TP_prior, 
+    jags.1 <- run_model(run = "short", mix, source, discr, model_filename, alpha.prior = TP_prior, 
         resid_err, process_err)
     ########################## 
     R2jags::attach.jags(jags.1)
@@ -237,8 +249,7 @@ ggplot(data_box, aes(x=x))+geom_line(aes(y=median,color = source),size = 1)+scal
 
 <img src="README_files/figure-markdown_github/unnamed-chunk-7-1.png" width="672" />
 
-
-**Random Forest model development**
+Random Forest model development
 
 *Set working directory and read in dataset*
 
@@ -248,7 +259,7 @@ Read in reconstuctured Sea Around Us project data
 famandspp<-read.csv("SAULandings_familyandspp.csv", header = T)
 ```
 
-quick plot to take a look at it
+Lets take a look at it
 
 ``` r
 a<-ggplot(famandspp,aes(x=year,y=sqrt(sumcatch)))+
@@ -258,7 +269,7 @@ a
 
 <img src="README_files/figure-markdown_github/unnamed-chunk-10-1.png" width="672" />
 
-recast and from in to df with columns for catch taxa
+Lets recast and form in to data frame with columns for catch taxa
 
 ``` r
 df <- data.frame(cast(famandspp, year ~ Taxon.Name ))
@@ -399,6 +410,8 @@ ggplot(plot,aes(x=year,y=tp))+
 
 This the syntax input of the randomForest model input. ntree is the number of trees used to build the model. A data partition to speed up/create a testset. Then a formula expression of the model to be built
 
+\*NOTE: This is an abbreviate randomForest model, ntree is fixed at 100 to reduce computation time.
+
 ``` r
 #################################
 #################################
@@ -445,11 +458,40 @@ Selection of interactions between predictors and trophic position response. Yell
 
 ICE plots function as refined partial dependence plots showing the functional relationship between the predicted response and the feature for a subset of individual observations. ICE plots effectively highlight the variation in fitted values. Predictors are pinched at minimum observed value such that the right vertical axis displays change in the response over the baseline as fraction of the response’s observed range. While the left y-axis shows a conventional, centered conditional response akin to a traditional partial dependence plot (yellow highlighted black line). Plots showing wedges acorss their range are more interactive (forage dist, wingload,MEIave, avgTemplag1, etc) than those showing primarily parallel responses which tend to be addititive (year, mullidae, MEI lag1). Plots are rank ordered by variable importance as a measure of percent mean squared error reduction under permutation.
 
+``` r
+library(ICEbox)
+```
+
+    ## Loading required package: sfsmisc
+
+    ## 
+    ## Attaching package: 'sfsmisc'
+
+    ## The following object is masked from 'package:data.table':
+    ## 
+    ##     last
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     last
+
+``` r
+Z <- subset(training1, select = c("tp", "MEIave_by_year","PDOave_by_year","NPGOyear_mean" ,"avgTemp" ,
+                                  "PDOlag1", "NPGOlag1","avgTemplag1" ,"MEIlag1" ,
+                                  "Carangidae" ,"Exocoetidae" ,"Mullidae" ,"Ommastrephidae" ,
+                                  "forage_dist" , "wing_load" , "spp" , 
+                                  "year"))
+final_fit <- randomForest(Z[,2:17],Z[,1],ntree = ntree, importance = TRUE)
+sonarimp <- importance(final_fit)
+impvar<- rownames(sonarimp)[order(sonarimp[,1],decreasing = TRUE)]
+impvar <- impvar[2:16]
+```
+
 <img src="README_files/figure-markdown_github/unnamed-chunk-20-1.png" width="960" />
 
 **Single Column Imp Plot**
 
-generate and index variable importance single column gradient plot
+We generated a variable importance single column gradient plot. The variables are rank ordered by measure of variable importance as a measure of reduction in mean squared error under random permutation. Species and year are removed from the gradient for the figure 5 plot.
 
 ``` r
 importance <- as.data.frame(melt(importance(final_fit,type=1)))
@@ -476,7 +518,7 @@ scale<-ggplot(importance,aes(x = X2, y = X1, fill = value))+
   theme_void()
 ```
 
-rename partial dependence dataframe columns
+Partial dependence data columns are renamed
 
 ``` r
 colnames(df1) <- c("forage_dist","trophic_position")
@@ -509,7 +551,7 @@ pdep2d<-ggplot(a,aes(y=trophic_position,x=value))+geom_line()+facet_wrap(~predic
                               strip.text=element_text(hjust=0))
 ```
 
-Build heatmap function that allows partial depenedence data input, specify axes, and ramp gradient color hex.
+Build heatmap/surface plot function that allows partial depenedence data input, specify axes, and ramp gradient color hex designation.
 
 ``` r
 heatmap <- function(data,x,y,high.col){
@@ -525,6 +567,12 @@ heatmap <- function(data,x,y,high.col){
 #climate - #3288bd
 #mix - #d53e4f
 ```
+
+Generate suface plots
+
+Grob generation and graphical matrix definition
+
+Arrange grobs with grid.arrange
 
 ``` r
 grid.arrange(
@@ -547,4 +595,4 @@ grid.arrange(
             layout_matrix = lay)
 ```
 
-<img src="README_files/figure-markdown_github/unnamed-chunk-28-1.png" width="1248" />
+<img src="README_files/figure-markdown_github/unnamed-chunk-28-1.png" width="1248" /> Final fig (fig in pub received minor post-processing)
