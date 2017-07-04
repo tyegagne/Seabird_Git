@@ -198,7 +198,7 @@ resid_err <- FALSE
 process_err <- TRUE
 write_JAGS_model(model_filename, resid_err,process_err, mix, source)
 #run model
-jags.1 <- run_model(run="short",mix,source,discr,model_filename,
+jags.1 <- run_model(run="normal",mix,source,discr,model_filename,
                     alpha.prior = TP_prior,resid_err,process_err)
 ##########################
 ##########################
@@ -283,10 +283,13 @@ source_names <- source$source_names
 
 ```{r, fig.retina=2,fig.width=7, fig.height=10}
 
+
 data_box$spp <- as.factor(data_box$spp)
 data_box$spp <- factor(data_box$spp, levels=c("LAAL", "BUPE", "WTSH", "WTTR", "BRBO","BRNO","WHTE","SOTE","TP"))
 
 #data_box <- subset(data_box, spp == c("LAAL", "BUPE", "WTSH", "WTTR", "BRBO","BRNO","WHTE","SOTE"))
+
+#save(data_box, file =  "mix_run_July3" )
 
 ggplot(data_box, aes(x=x))+geom_line(aes(y=median,color = source),size = 1)+scale_color_brewer(type = "seq",palette = 'Spectral' )+facet_wrap(~spp,ncol =2)+theme_classic()+ 
   theme(strip.background = element_blank(),
